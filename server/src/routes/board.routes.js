@@ -1,12 +1,12 @@
 import express from 'express'
 import {
   createNewBoard,
-  getBoardDetails,
-  updateBoardProperty,
+  getBoard,
+  updateBoard,
   deleteBoard,
   inviteUser,
   returnBoardRelatedUsers,
-  returnUserRelatedBoards,
+  getUserBoards,
   removeBoardFromUser,
 } from '../service/boards.js'
 
@@ -19,27 +19,32 @@ const router = express.Router()
  *     Board:
  *       type: object
  *       required:
- *         - admin
  *         - title
+ *         - admin
  *         - users
  *       properties:
- *         admin:
+ *         id:
  *           type: string
- *           description: The admin user's ID
+ *           description: The auto-generated id of the board
  *         title:
  *           type: string
- *           description: The board's title
- *         coverPhoto:
+ *           description: The board title
+ *         admin:
  *           type: string
- *           description: The board's cover photo URL
- *         visibility:
- *           type: string
- *           description: The board's visibility setting
+ *           description: The admin's user ID
  *         users:
  *           type: array
  *           items:
  *             type: string
- *           description: List of user IDs with access to the board
+ *           description: Array of user IDs
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: The date when the board was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: The date when the board was last updated
  */
 
 /**
@@ -64,30 +69,16 @@ const router = express.Router()
  */
 router.post('/', async (req, res) => {
   try {
-    const { admin, title, coverPhoto, visibility, users } = req.body
-    if (!users) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'Users are undefined',
-      })
-    }
-
-    const data = await createNewBoard(
-      admin,
-      title,
-      coverPhoto,
-      visibility,
-      users
-    )
+    const board = await createNewBoard(req.body)
     res.status(200).json({
       statusCode: 200,
-      message: 'Board created successfully!',
-      data,
+      message: 'Board created successfully',
+      data: board,
     })
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
-      message: "Couldn't create a board!",
+      message: error.message,
       error,
     })
   }
@@ -95,40 +86,31 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /board/{boardId}:
+ * /board/{id}:
  *   get:
  *     summary: Get board details
  *     tags: [Board]
  *     parameters:
  *       - in: path
- *         name: boardId
+ *         name: id
  *         schema:
  *           type: string
  *         required: true
- *         description: Board ID
+ *         description: The board id
  *     responses:
  *       200:
  *         description: Board details retrieved successfully
- *       400:
- *         description: Invalid input
+ *       404:
+ *         description: Board not found
  *       500:
  *         description: Server error
  */
-router.get('/:boardId', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const { boardId } = req.params
-    if (!boardId) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'Board ID is required',
-      })
-    }
-
-    const boardData = await getBoardDetails(boardId)
+    const board = await getBoard(req.params.id)
     res.status(200).json({
       statusCode: 200,
-      message: 'Board details retrieved successfully',
-      data: boardData,
+      data: board,
     })
   } catch (error) {
     res.status(500).json({
@@ -141,58 +123,38 @@ router.get('/:boardId', async (req, res) => {
 
 /**
  * @swagger
- * /board/{boardId}:
+ * /board/{id}:
  *   put:
- *     summary: Update board property
+ *     summary: Update board details
  *     tags: [Board]
  *     parameters:
  *       - in: path
- *         name: boardId
+ *         name: id
  *         schema:
  *           type: string
  *         required: true
- *         description: Board ID
+ *         description: The board id
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - property
- *               - data
- *             properties:
- *               property:
- *                 type: string
- *                 description: Property name to update
- *               data:
- *                 type: object
- *                 description: New property value
+ *             $ref: '#/components/schemas/Board'
  *     responses:
  *       200:
  *         description: Board updated successfully
- *       400:
- *         description: Invalid input
+ *       404:
+ *         description: Board not found
  *       500:
  *         description: Server error
  */
-router.put('/:boardId', async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
-    const { boardId } = req.params
-    const { property, data } = req.body
-
-    if (!boardId || !property || !data) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'Missing required parameters',
-      })
-    }
-
-    const result = await updateBoardProperty(boardId, property, data)
+    const board = await updateBoard(req.params.id, req.body)
     res.status(200).json({
       statusCode: 200,
       message: 'Board updated successfully',
-      data: result,
+      data: board,
     })
   } catch (error) {
     res.status(500).json({
@@ -205,40 +167,31 @@ router.put('/:boardId', async (req, res) => {
 
 /**
  * @swagger
- * /board/{boardId}:
+ * /board/{id}:
  *   delete:
- *     summary: Delete board
+ *     summary: Delete a board
  *     tags: [Board]
  *     parameters:
  *       - in: path
- *         name: boardId
+ *         name: id
  *         schema:
  *           type: string
  *         required: true
- *         description: Board ID
+ *         description: The board id
  *     responses:
  *       200:
  *         description: Board deleted successfully
- *       400:
- *         description: Invalid input
+ *       404:
+ *         description: Board not found
  *       500:
  *         description: Server error
  */
-router.delete('/:boardId', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const { boardId } = req.params
-    if (!boardId) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'Board ID is required',
-      })
-    }
-
-    const result = await deleteBoard(boardId)
+    await deleteBoard(req.params.id)
     res.status(200).json({
       statusCode: 200,
-      message: result.message,
-      data: { boardId },
+      message: 'Board deleted successfully',
     })
   } catch (error) {
     res.status(500).json({
@@ -251,17 +204,17 @@ router.delete('/:boardId', async (req, res) => {
 
 /**
  * @swagger
- * /board/{boardId}/invite:
+ * /board/{id}/invite:
  *   post:
- *     summary: Invite user to board
+ *     summary: Invite a user to the board
  *     tags: [Board]
  *     parameters:
  *       - in: path
- *         name: boardId
+ *         name: id
  *         schema:
  *           type: string
  *         required: true
- *         description: Board ID
+ *         description: The board id
  *     requestBody:
  *       required: true
  *       content:
@@ -273,32 +226,30 @@ router.delete('/:boardId', async (req, res) => {
  *             properties:
  *               address:
  *                 type: string
- *                 description: User's address to invite
+ *                 description: The user's address to invite
  *     responses:
  *       200:
  *         description: User invited successfully
- *       400:
- *         description: Invalid input
+ *       404:
+ *         description: Board not found
  *       500:
  *         description: Server error
  */
-router.post('/:boardId/invite', async (req, res) => {
+router.post('/:id/invite', async (req, res) => {
   try {
-    const { boardId } = req.params
     const { address } = req.body
-
-    if (!boardId || !address) {
+    if (!address) {
       return res.status(400).json({
         statusCode: 400,
-        message: 'Board ID and user address are required',
+        message: 'Address is required',
       })
     }
 
-    const result = await inviteUser(boardId, address)
+    const data = await inviteUser(req.params.id, address)
     res.status(200).json({
       statusCode: 200,
       message: 'User invited successfully',
-      data: result,
+      data,
     })
   } catch (error) {
     res.status(500).json({
@@ -311,41 +262,45 @@ router.post('/:boardId/invite', async (req, res) => {
 
 /**
  * @swagger
- * /board/{boardId}/users:
- *   get:
- *     summary: Get board users
+ * /board/users:
+ *   post:
+ *     summary: Get board related users
  *     tags: [Board]
- *     parameters:
- *       - in: path
- *         name: boardId
- *         schema:
- *           type: string
- *         required: true
- *         description: Board ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userList
+ *             properties:
+ *               userList:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of user IDs
  *     responses:
  *       200:
- *         description: Board users retrieved successfully
+ *         description: Users retrieved successfully
  *       400:
  *         description: Invalid input
  *       500:
  *         description: Server error
  */
-router.get('/:boardId/users', async (req, res) => {
+router.post('/users', async (req, res) => {
   try {
-    const { boardId } = req.params
-    if (!boardId) {
+    const { userList } = req.body
+    if (!userList || !Array.isArray(userList)) {
       return res.status(400).json({
         statusCode: 400,
-        message: 'Board ID is required',
+        message: 'User list is required and must be an array',
       })
     }
 
-    const boardData = await getBoardDetails(boardId)
-    const users = await returnBoardRelatedUsers(boardData.users)
-
+    const users = await returnBoardRelatedUsers(userList)
     res.status(200).json({
       statusCode: 200,
-      message: 'Board users retrieved successfully',
       data: users,
     })
   } catch (error) {
@@ -357,49 +312,96 @@ router.get('/:boardId/users', async (req, res) => {
   }
 })
 
-// Get user's boards
-router.post('/user-boards', async (req, res) => {
+/**
+ * @swagger
+ * /board/user/{userId}:
+ *   get:
+ *     summary: Get user's boards
+ *     tags: [Board]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The user ID
+ *     responses:
+ *       200:
+ *         description: User's boards retrieved successfully
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/user/:userId', async (req, res) => {
   try {
-    const { boardList } = req.body
-    if (!boardList || boardList.length === 0) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'Board list is undefined!',
-      })
-    }
-
-    const boardData = await returnUserRelatedBoards(boardList)
+    const boards = await getUserBoards(req.params.userId)
     res.status(200).json({
       statusCode: 200,
-      boardData,
+      data: boards,
     })
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
+      message: error.message,
       error,
     })
   }
 })
 
-// Remove user from board
-router.delete('/:boardId/users/:userId', async (req, res) => {
+/**
+ * @swagger
+ * /board/{id}/remove-user:
+ *   delete:
+ *     summary: Remove a user from the board
+ *     tags: [Board]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The board id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: The user ID to remove
+ *     responses:
+ *       200:
+ *         description: User removed successfully
+ *       404:
+ *         description: Board not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/:id/remove-user', async (req, res) => {
   try {
-    const { boardId, userId } = req.params
-    if (!boardId || !userId) {
+    const { userId } = req.body
+    if (!userId) {
       return res.status(400).json({
         statusCode: 400,
-        message: 'Missing required parameters',
+        message: 'User ID is required',
       })
     }
 
-    const result = await removeBoardFromUser(boardId, userId)
+    const data = await removeBoardFromUser(req.params.id, userId)
     res.status(200).json({
       statusCode: 200,
-      data: result,
+      message: 'User removed successfully',
+      data,
     })
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
+      message: error.message,
       error,
     })
   }

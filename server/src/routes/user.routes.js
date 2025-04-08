@@ -1,9 +1,6 @@
 import express from 'express'
 import { createNewUser, returnUserData } from '../service/auth.js'
-import {
-  removeBoardFromUser,
-  returnUserRelatedBoards,
-} from '../service/boards.js'
+import { removeBoardFromUser, getUserBoards } from '../service/boards.js'
 
 const router = express.Router()
 
@@ -189,12 +186,10 @@ router.put('/boards', async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - boardList
+ *               - userId
  *             properties:
- *               boardList:
- *                 type: array
- *                 items:
- *                   type: string
+ *               userId:
+ *                 type: string
  *     responses:
  *       200:
  *         description: User boards retrieved successfully
@@ -205,15 +200,15 @@ router.put('/boards', async (req, res) => {
  */
 router.post('/boards', async (req, res) => {
   try {
-    const { boardList } = req.body
-    if (!boardList || !Array.isArray(boardList)) {
+    const { userId } = req.body
+    if (!userId) {
       return res.status(400).json({
         statusCode: 400,
-        message: 'Board list must be an array',
+        message: 'User ID is required',
       })
     }
 
-    const boards = await returnUserRelatedBoards(boardList)
+    const boards = await getUserBoards(userId)
     res.status(200).json({
       statusCode: 200,
       message: 'User boards retrieved successfully',

@@ -1,10 +1,11 @@
 import express from 'express'
 import {
-  createNewTask,
-  reorderTasksInSameList,
-  switchTasksBetweenLists,
-  updateTaskProperty,
-} from '../service/task.js'
+  createTask,
+  getListTasks,
+  updateTask,
+  deleteTask,
+  reorderTasks,
+} from '../service/tasks.js'
 
 const router = express.Router()
 
@@ -15,25 +16,33 @@ const router = express.Router()
  *     Task:
  *       type: object
  *       required:
- *         - boardId
  *         - listId
- *         - task
- *         - taskIds
+ *         - title
+ *         - order
  *       properties:
- *         boardId:
+ *         id:
  *           type: string
- *           description: The board's ID
+ *           description: The auto-generated id of the task
  *         listId:
  *           type: string
- *           description: The list's ID
- *         task:
- *           type: object
- *           description: The task object
- *         taskIds:
- *           type: array
- *           items:
- *             type: string
- *           description: The order of tasks
+ *           description: The list id this task belongs to
+ *         title:
+ *           type: string
+ *           description: The task title
+ *         description:
+ *           type: string
+ *           description: The task description
+ *         order:
+ *           type: number
+ *           description: The order of the task in the list
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: The date when the task was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: The date when the task was last updated
  */
 
 /**
@@ -52,28 +61,164 @@ const router = express.Router()
  *       200:
  *         description: Task created successfully
  *       400:
- *         description: Missing required parameters
+ *         description: Invalid input
  *       500:
  *         description: Server error
  */
 router.post('/', async (req, res) => {
   try {
-    const { boardId, task, listId, taskIds } = req.body
-    if (!boardId || !task || !listId || !taskIds) {
+    const { listId, ...taskData } = req.body
+    if (!listId) {
       return res.status(400).json({
         statusCode: 400,
-        message: 'Missing required parameters',
+        message: 'List ID is required',
       })
     }
 
-    const data = await createNewTask(boardId, task, listId, taskIds)
+    const task = await createTask(listId, taskData)
     res.status(200).json({
       statusCode: 200,
-      data,
+      message: 'Task created successfully',
+      data: task,
     })
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
+      message: error.message,
+      error,
+    })
+  }
+})
+
+/**
+ * @swagger
+ * /task/list/{listId}:
+ *   get:
+ *     summary: Get all tasks in a list
+ *     tags: [Task]
+ *     parameters:
+ *       - in: path
+ *         name: listId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The list id
+ *     responses:
+ *       200:
+ *         description: Tasks retrieved successfully
+ *       404:
+ *         description: List not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/list/:listId', async (req, res) => {
+  try {
+    const tasks = await getListTasks(req.params.listId)
+    res.status(200).json({
+      statusCode: 200,
+      data: tasks,
+    })
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+      error,
+    })
+  }
+})
+
+/**
+ * @swagger
+ * /task/{id}:
+ *   put:
+ *     summary: Update a task
+ *     tags: [Task]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The task id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Task'
+ *     responses:
+ *       200:
+ *         description: Task updated successfully
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/:id', async (req, res) => {
+  try {
+    const { listId, ...updateData } = req.body
+    if (!listId) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'List ID is required',
+      })
+    }
+
+    const task = await updateTask(listId, req.params.id, updateData)
+    res.status(200).json({
+      statusCode: 200,
+      message: 'Task updated successfully',
+      data: task,
+    })
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+      error,
+    })
+  }
+})
+
+/**
+ * @swagger
+ * /task/{id}:
+ *   delete:
+ *     summary: Delete a task
+ *     tags: [Task]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The task id
+ *     responses:
+ *       200:
+ *         description: Task deleted successfully
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const { listId } = req.body
+    if (!listId) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'List ID is required',
+      })
+    }
+
+    await deleteTask(listId, req.params.id)
+    res.status(200).json({
+      statusCode: 200,
+      message: 'Task deleted successfully',
+    })
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
       error,
     })
   }
@@ -83,7 +228,7 @@ router.post('/', async (req, res) => {
  * @swagger
  * /task/reorder:
  *   put:
- *     summary: Reorder tasks in the same list
+ *     summary: Reorder tasks in a list
  *     tags: [Task]
  *     requestBody:
  *       required: true
@@ -92,160 +237,45 @@ router.post('/', async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - boardId
  *               - listId
- *               - taskIds
+ *               - tasks
  *             properties:
- *               boardId:
- *                 type: string
  *               listId:
  *                 type: string
- *               taskIds:
+ *                 description: The list id
+ *               tasks:
  *                 type: array
  *                 items:
- *                   type: string
+ *                   $ref: '#/components/schemas/Task'
+ *                 description: Array of tasks with updated order
  *     responses:
  *       200:
  *         description: Tasks reordered successfully
  *       400:
- *         description: Missing required parameters
+ *         description: Invalid input
  *       500:
  *         description: Server error
  */
 router.put('/reorder', async (req, res) => {
   try {
-    const { boardId, listId, taskIds } = req.body
-    if (!boardId || !listId || !taskIds) {
+    const { listId, tasks } = req.body
+    if (!listId || !tasks || !Array.isArray(tasks)) {
       return res.status(400).json({
         statusCode: 400,
-        message: 'Missing required parameters',
+        message: 'List ID and tasks array are required',
       })
     }
 
-    const data = await reorderTasksInSameList(boardId, listId, taskIds)
+    const updatedTasks = await reorderTasks(listId, tasks)
     res.status(200).json({
       statusCode: 200,
-      data,
+      message: 'Tasks reordered successfully',
+      data: updatedTasks,
     })
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
-      error,
-    })
-  }
-})
-
-/**
- * @swagger
- * /task/switch:
- *   put:
- *     summary: Switch tasks between lists
- *     tags: [Task]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - boardId
- *               - lists
- *             properties:
- *               boardId:
- *                 type: string
- *               lists:
- *                 type: object
- *                 additionalProperties:
- *                   type: array
- *                   items:
- *                     type: string
- *     responses:
- *       200:
- *         description: Tasks switched successfully
- *       400:
- *         description: Missing required parameters
- *       500:
- *         description: Server error
- */
-router.put('/switch', async (req, res) => {
-  try {
-    const { boardId, lists } = req.body
-    if (!boardId || !lists) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'Missing required parameters',
-      })
-    }
-
-    const data = await switchTasksBetweenLists(boardId, lists)
-    res.status(200).json({
-      statusCode: 200,
-      data,
-    })
-  } catch (error) {
-    res.status(500).json({
-      statusCode: 500,
-      error,
-    })
-  }
-})
-
-/**
- * @swagger
- * /task/{taskId}:
- *   put:
- *     summary: Update task property
- *     tags: [Task]
- *     parameters:
- *       - in: path
- *         name: taskId
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - boardId
- *               - property
- *               - data
- *             properties:
- *               boardId:
- *                 type: string
- *               property:
- *                 type: string
- *               data:
- *                 type: object
- *     responses:
- *       200:
- *         description: Task updated successfully
- *       400:
- *         description: Missing required parameters
- *       500:
- *         description: Server error
- */
-router.put('/:taskId', async (req, res) => {
-  try {
-    const { taskId } = req.params
-    const { boardId, property, data } = req.body
-    if (!taskId || !boardId || !property || !data) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'Missing required parameters',
-      })
-    }
-
-    const result = await updateTaskProperty(boardId, taskId, property, data)
-    res.status(200).json({
-      statusCode: 200,
-      data: result,
-    })
-  } catch (error) {
-    res.status(500).json({
-      statusCode: 500,
+      message: error.message,
       error,
     })
   }

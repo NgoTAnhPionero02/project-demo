@@ -1,29 +1,33 @@
-import admin from 'firebase-admin'
+import { TABLES } from '../config/tables.js'
+import { createItem, getItem } from '../utils/dynamodb.js'
 
 // Create a new user
 export const createNewUser = async (uid, email, name, picture) => {
-  const userRef = admin.firestore().collection('users').doc(uid)
-  const userData = {
-    uid,
-    email,
-    name,
-    picture,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  }
+  try {
+    const userData = {
+      uid,
+      email,
+      name,
+      picture,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
 
-  await userRef.set(userData)
-  return userData
+    await createItem(TABLES.USERS, userData)
+    return userData
+  } catch (error) {
+    console.error('Error creating new user:', error)
+    throw error
+  }
 }
 
 // Return user data
 export const returnUserData = async (uid) => {
-  const userRef = admin.firestore().collection('users').doc(uid)
-  const userDoc = await userRef.get()
-
-  if (!userDoc.exists) {
-    throw new Error('User not found')
+  try {
+    const user = await getItem(TABLES.USERS, { uid })
+    return user
+  } catch (error) {
+    console.error('Error getting user data:', error)
+    throw error
   }
-
-  return userDoc.data()
 }
