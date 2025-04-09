@@ -19,7 +19,7 @@ const Layout = (props) => {
           if (val.path === "/signup") {
             return (
               <Route
-                key={key}
+                key={key + 'route'}
                 component={val.component}
                 exact
                 path={val.path}
@@ -27,12 +27,12 @@ const Layout = (props) => {
             );
           } else if (val.path === "/") {
             return (
-              <Route exact path="/" render={() => <Redirect to="/boards" />} />
+              <Route key={key + 'route'} exact path="/" render={() => <Redirect to="/boards" />} />
             );
           } else {
             return (
               <Route
-                key={key}
+                key={key + 'route'}
                 render={(rProps) =>
                   token === null ? <Login /> : <Component />
                 }

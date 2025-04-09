@@ -39,20 +39,22 @@ const Login = (
   setOpenBackdrop
 ) => {
   //change from create users to...
-  firebase
-    .auth()
-    .signInWithEmailAndPassword(email, password)
-    //everything is almost exactly the same as the function above
-    .then(async (res) => {
-      const token = await Object.entries(res.user)[5][1].b;
-      //set token to localStorage
-      handleSignIn(res, setUserData, setOpenBackdrop);
-      await localStorage.setItem("pmt_token", token);
-      await setToken(token);
-    })
-    .catch((err) => {
-      setErrors((prev) => [...prev, err.message]);
-    });
+  // firebase
+  //   .auth()
+  //   .signInWithEmailAndPassword(email, password)
+  //   //everything is almost exactly the same as the function above
+  //   .then(async (res) => {
+  //     const token = await Object.entries(res.user)[5][1].b;
+  //     //set token to localStorage
+  //     handleSignIn(res, setUserData, setOpenBackdrop);
+  //     await localStorage.setItem("pmt_token", token);
+  //     await setToken(token);
+  //   })
+  //   .catch((err) => {
+  //     setErrors((prev) => [...prev, err.message]);
+  //   });
+      localStorage.setItem("pmt_token", 'token');
+      setToken('token');
 };
 
 const LoginWithGoogle = (setErrors, setToken, setUserData, setOpenBackdrop) => {

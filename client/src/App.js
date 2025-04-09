@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import firebase from "firebase";
-import { FirebaseConfig } from "./firebase/FirebaseConfig";
 import AuthProvider from "provider/AuthProvider";
 import UIProvider from "provider/UIProvider";
 import UserProvider from "provider/UserProvider";
 import { Loading } from "components";
-import { UserHelpers } from "helpers/";
+// import firebase from "firebase";
+// import { FirebaseConfig } from "./firebase/FirebaseConfig";
+// import { UserHelpers } from "helpers/";
 
 import Routes from "./routes/Routes";
 
@@ -15,23 +15,23 @@ const App = () => {
   const [boards, setBoards] = useState([]);
   const [renderedBoard, setRenderedBoard] = useState();
 
-  useEffect(() => {
-    if (!userData) {
-      firebase.auth().onAuthStateChanged(function (user) {
-        if (user) {
-          UserHelpers.HandleUserData(
-            user.uid,
-            setUserData,
-            setBoards,
-            setOpenBackdrop,
-            userData
-          );
-        } else {
-          return;
-        }
-      });
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!userData) {
+  //     firebase.auth().onAuthStateChanged(function (user) {
+  //       if (user) {
+  //         UserHelpers.HandleUserData(
+  //           user.uid,
+  //           setUserData,
+  //           setBoards,
+  //           setOpenBackdrop,
+  //           userData
+  //         );
+  //       } else {
+  //         return;
+  //       }
+  //     });
+  //   }
+  // }, []);
 
   return (
     <UIProvider
