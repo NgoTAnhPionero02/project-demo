@@ -1,6 +1,6 @@
 import express from 'express'
 import { createNewUser, returnUserData } from '../service/auth.js'
-import { removeBoardFromUser, getUserBoards } from '../service/boards.js'
+import { getUserBoards, removeBoardFromUser } from '../service/boards.js'
 
 const router = express.Router()
 
@@ -11,13 +11,12 @@ const router = express.Router()
  *     User:
  *       type: object
  *       required:
- *         - uid
  *         - email
  *         - name
  *       properties:
  *         uid:
  *           type: string
- *           description: The user's unique ID
+ *           description: The user's unique ID (auto-generated)
  *         email:
  *           type: string
  *           description: The user's email
@@ -51,15 +50,15 @@ const router = express.Router()
  */
 router.post('/', async (req, res) => {
   try {
-    const { uid, email, name, picture } = req.body
-    if (!uid) {
+    const { email, name, picture } = req.body
+    if (!email || !name) {
       return res.status(400).json({
         statusCode: 400,
-        message: 'UID is undefined',
+        message: 'Email and name are required',
       })
     }
 
-    const data = await createNewUser(uid, email, name, picture)
+    const data = await createNewUser(email, name, picture)
     res.status(200).json({
       statusCode: 200,
       message: 'User created successfully!',
