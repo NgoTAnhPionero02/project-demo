@@ -30,6 +30,7 @@
         "exports": "always-multiline",
         "functions": "never"
       }
-    ]
+    ],
+    "import/extensions": ["error", "ignorePackages"]
   }
 }

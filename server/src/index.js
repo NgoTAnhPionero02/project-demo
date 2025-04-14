@@ -1,14 +1,14 @@
+import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
-import cors from 'cors'
 import morgan from 'morgan'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpecs from './config/swagger.js'
 import boardRoutes from './routes/board.routes.js'
+import imageRoutes from './routes/image.routes.js'
 import listRoutes from './routes/list.routes.js'
 import taskRoutes from './routes/task.routes.js'
 import userRoutes from './routes/user.routes.js'
-import imageRoutes from './routes/image.routes.js'
 
 dotenv.config()
 
@@ -20,7 +20,7 @@ app.use(express.json())
 app.use(morgan('dev'))
 
 // Swagger UI
-app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpecs))
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs))
 
 // Routes
 app.use('/user', userRoutes)
@@ -42,5 +42,5 @@ app.use((err, req, res, _next) => {
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
-  console.log(`Swagger documentation available at http://localhost:${PORT}`)
+  console.log(`Swagger documentation available at http://localhost:${PORT}/docs`)
 })

@@ -1,16 +1,17 @@
-import dynamoDB from '../config/dynamodb.js'
-import s3Client from '../config/s3.js'
 import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3'
+import {
+  BatchWriteCommand,
   PutCommand,
   QueryCommand,
-  BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
-import {
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import dynamoDB from '../config/dynamodb.js'
+import s3Client from '../config/s3.js'
+import { ENTITY_TYPES, TABLE_NAME } from '../config/tables.js'
 
 const BUCKET_NAME = process.env.S3_BUCKET_NAME || 'your-bucket-name'
 
@@ -19,16 +20,17 @@ export const getImages = async () => {
   try {
     const result = await dynamoDB.send(
       new QueryCommand({
-        TableName: 'Images',
-        KeyConditionExpression: 'type = :type',
+        TableName: TABLE_NAME,
+        IndexName: 'UserBoardIndex',
+        KeyConditionExpression: 'sk = :sk',
         ExpressionAttributeValues: {
-          ':type': 'image',
+          ':sk': 'IMAGE#METADATA',
         },
       })
     )
 
     if (!result.Items || result.Items.length === 0) {
-      throw new Error('No images found')
+      return []
     }
 
     // Get signed URLs for each image
@@ -53,41 +55,51 @@ export const getImages = async () => {
   }
 }
 
-// Save images to DynamoDB
-export const saveImages = async (images) => {
+// Get board cover images
+export const getBoardCoverImages = async () => {
   try {
-    // First, get all existing images to delete them
-    const existingImages = await getImages()
+    const result = await dynamoDB.send(
+      new QueryCommand({
+        TableName: TABLE_NAME,
+        IndexName: 'UserBoardIndex',
+        KeyConditionExpression: 'sk = :sk',
+        FilterExpression: 'imageType = :imageType',
+        ExpressionAttributeValues: {
+          ':sk': 'IMAGE#METADATA',
+          ':imageType': 'cover',
+        },
+      })
+    )
 
-    // Delete existing images from S3 and DynamoDB
-    for (const image of existingImages) {
-      // Delete from S3
-      await s3Client.send(
-        new DeleteObjectCommand({
+    if (!result.Items || result.Items.length === 0) {
+      return []
+    }
+
+    // Get signed URLs for each image
+    const imagesWithUrls = await Promise.all(
+      result.Items.map(async (image) => {
+        const command = new GetObjectCommand({
           Bucket: BUCKET_NAME,
           Key: image.s3Key,
         })
-      )
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+        return {
+          ...image,
+          url,
+        }
+      })
+    )
 
-      // Delete from DynamoDB
-      await dynamoDB.send(
-        new BatchWriteCommand({
-          RequestItems: {
-            Images: [
-              {
-                DeleteRequest: {
-                  Key: {
-                    type: 'image',
-                    id: image.id,
-                  },
-                },
-              },
-            ],
-          },
-        })
-      )
-    }
+    return imagesWithUrls
+  } catch (error) {
+    console.error('Error getting board cover images:', error)
+    throw error
+  }
+}
 
+// Save images to DynamoDB
+export const saveImages = async (images, imageType = 'general') => {
+  try {
     // Save new images
     const savedImages = await Promise.all(
       images.map(async (image) => {
@@ -108,17 +120,20 @@ export const saveImages = async (images) => {
 
         // Save metadata to DynamoDB
         const metadata = {
-          type: 'image',
+          pk: `IMAGE#${imageId}`,
+          sk: 'IMAGE#METADATA',
           id: imageId,
           s3Key,
-          description: image.description,
+          description: image.description || '',
+          imageType,
+          entityType: ENTITY_TYPES.IMAGE,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }
 
         await dynamoDB.send(
           new PutCommand({
-            TableName: 'Images',
+            TableName: TABLE_NAME,
             Item: metadata,
           })
         )
@@ -140,6 +155,60 @@ export const saveImages = async (images) => {
     return savedImages
   } catch (error) {
     console.error('Error saving images:', error)
+    throw error
+  }
+}
+
+// Delete image
+export const deleteImage = async (imageId) => {
+  try {
+    // First get the image to get the S3 key
+    const result = await dynamoDB.send(
+      new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: 'pk = :pk AND sk = :sk',
+        ExpressionAttributeValues: {
+          ':pk': `IMAGE#${imageId}`,
+          ':sk': 'IMAGE#METADATA',
+        },
+      })
+    )
+
+    if (!result.Items || result.Items.length === 0) {
+      throw new Error('Image not found')
+    }
+
+    const image = result.Items[0]
+
+    // Delete from S3
+    await s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: image.s3Key,
+      })
+    )
+
+    // Delete from DynamoDB
+    await dynamoDB.send(
+      new BatchWriteCommand({
+        RequestItems: {
+          [TABLE_NAME]: [
+            {
+              DeleteRequest: {
+                Key: {
+                  pk: `IMAGE#${imageId}`,
+                  sk: 'IMAGE#METADATA',
+                },
+              },
+            },
+          ],
+        },
+      })
+    )
+
+    return { success: true, imageId }
+  } catch (error) {
+    console.error('Error deleting image:', error)
     throw error
   }
 }

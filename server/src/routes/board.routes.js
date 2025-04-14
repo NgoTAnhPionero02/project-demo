@@ -37,6 +37,13 @@ const router = express.Router()
  *           items:
  *             type: string
  *           description: Array of user IDs
+ *         visibility:
+ *           type: string
+ *           enum: [private, public]
+ *           description: The board visibility
+ *         coverPhoto:
+ *           type: string
+ *           description: URL of the board cover photo
  *         createdAt:
  *           type: string
  *           format: date-time
