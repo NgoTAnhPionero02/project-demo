@@ -38,8 +38,7 @@ module "database" {
   source = "./modules/database"
 
   table_name = local.table_name
-  project    = "my-project"
-  hash_key   = "id"
+  project    = local.project
 }
 
 # module "route53" {
