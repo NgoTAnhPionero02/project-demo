@@ -30,10 +30,6 @@ variable "aws_alb_target_group_arn" {
   type = string
 }
 
-variable "fe_domain" {
-  type = string
-}
-
 variable "aws_dynamodb_table_arn" {
   type = string
 }

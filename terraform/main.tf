@@ -4,7 +4,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket = "hoat-infra"
+    bucket = "hoat-bucket-infra"
     key    = "terraform/state"
     region = "ap-southeast-1"
   }
@@ -50,11 +50,11 @@ module "database" {
   hash_key   = "id"
 }
 
-module "route53" {
-  source = "./modules/route53"
+# module "route53" {
+#   source = "./modules/route53"
 
-  domain_name = local.domain_name
-}
+#   domain_name = local.domain_name
+# }
 
 module "ecr" {
   source = "./modules/ecr"
@@ -62,21 +62,21 @@ module "ecr" {
   repository_name = local.repository_name
 }
 
-module "certificate" {
-  source = "./modules/certificate"
+# module "certificate" {
+#   source = "./modules/certificate"
 
-  domain_name     = local.domain_name
-  route53_zone_id = module.route53.route53_zone_id
-  api_sub_domain  = local.api_sub_domain
-}
+#   domain_name     = local.domain_name
+#   route53_zone_id = module.route53.route53_zone_id
+#   api_sub_domain  = local.api_sub_domain
+# }
 
-module "ses" {
-  source = "./modules/ses"
+# module "ses" {
+#   source = "./modules/ses"
 
-  domain_name     = local.domain_name
-  route53_zone_id = module.route53.route53_zone_id
-  email_monitor   = local.email_monitor
-}
+#   domain_name     = local.domain_name
+#   route53_zone_id = module.route53.route53_zone_id
+#   email_monitor   = local.email_monitor
+# }
 
 module "networking" {
   source = "./modules/networking"
@@ -102,10 +102,10 @@ module "alb" {
   project         = local.project
   sg              = module.networking.sg
   vpc             = module.networking.vpc
-  certificate_arn = module.certificate.certificate_api_arn
-  route53_zone_id = module.route53.route53_zone_id
-  domain_name     = local.domain_name
-  api_sub_domain  = local.api_sub_domain
+  # certificate_arn = module.certificate.certificate_api_arn
+  # route53_zone_id = module.route53.route53_zone_id
+  # domain_name     = local.domain_name
+  # api_sub_domain  = local.api_sub_domain
 }
 
 module "ecs" {
@@ -116,7 +116,6 @@ module "ecs" {
   aws_alb_target_group_arn = module.alb.target_group_arn
 
   ecr_url                = "${module.ecr.ecr_repository_arn}:latest"
-  fe_domain              = local.domain_name
   port_container         = local.container_port
   s3_bucket_name         = local.bucket_name
   security_group         = module.networking.sg
@@ -143,11 +142,11 @@ module "monitoring" {
   ]
 }
 
-module "amplify" {
-  source             = "./modules/amplify"
-  app_id             = local.amplify_app_id
-  domain_name        = local.domain_name
-  branch_name        = local.branch_name
-  certificate_app_id = module.certificate.certificate_app_id
-  route53_zone_id    = module.route53.route53_zone_id
-}
+# module "amplify" {
+#   source             = "./modules/amplify"
+#   app_id             = local.amplify_app_id
+#   domain_name        = local.domain_name
+#   branch_name        = local.branch_name
+#   certificate_app_id = module.certificate.certificate_app_id
+#   route53_zone_id    = module.route53.route53_zone_id
+# }
