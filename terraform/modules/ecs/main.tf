@@ -84,6 +84,7 @@ resource "aws_iam_policy" "dynamodb_policy" {
         "dynamodb:PutItem",
         "dynamodb:GetItem",
         "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
       ],
       Effect = "Allow",
       Resource = [
