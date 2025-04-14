@@ -1,10 +1,23 @@
 locals {
-  environment_variables = {
-    AWS_REGION = var.aws_region
-    NODE_ENV   = "production"
-    # Add other environment variables here
-  }
-  secret_environments   = []
+  environment_variables = [
+    {
+      name  = "AWS_REGION"
+      value = var.aws_region
+    },
+    {
+      name  = "NODE_ENV"
+      value = "production"
+    },
+    {
+      name  = "S3_BUCKET_NAME"
+      value = var.s3_bucket_name
+    },
+    {
+      name  = "TABLE_NAME"
+      value = var.table_name
+    }
+  ]
+  secret_environments = []
 }
 
 resource "aws_iam_role" "ecsTaskExecutionRole" {
@@ -72,8 +85,11 @@ resource "aws_iam_policy" "dynamodb_policy" {
         "dynamodb:GetItem",
         "dynamodb:UpdateItem",
       ],
-      Effect   = "Allow",
-      Resource = "${var.aws_dynamodb_table_arn}"
+      Effect = "Allow",
+      Resource = [
+        "${var.aws_dynamodb_table_arn}/*",
+        "${var.aws_dynamodb_table_arn}",
+      ]
     }]
   })
 }

@@ -30,7 +30,7 @@ variable "aws_alb_target_group_arn" {
   type = string
 }
 
-variable "fe_domain" {
+variable "table_name" {
   type = string
 }
 

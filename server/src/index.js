@@ -23,6 +23,9 @@ app.use(morgan('dev'))
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs))
 
 // Routes
+app.use('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 app.use('/user', userRoutes)
 app.use('/board', boardRoutes)
 app.use('/list', listRoutes)
