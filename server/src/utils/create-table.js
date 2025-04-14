@@ -1,12 +1,13 @@
-import { CreateTableCommand, DescribeTableCommand, DynamoDBClient, UpdateTableCommand } from '@aws-sdk/client-dynamodb'
+import {
+  CreateTableCommand,
+  DescribeTableCommand,
+  DynamoDBClient,
+  UpdateTableCommand,
+} from '@aws-sdk/client-dynamodb'
 import { TABLE_SCHEMA } from '../config/tables.js'
 
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
 })
 
 export default async function createTable() {
@@ -21,7 +22,9 @@ export default async function createTable() {
       console.log('Table already exists:', TABLE_SCHEMA.TableName)
 
       // Check if GSIs exist
-      const describeResult = await client.send(new DescribeTableCommand(describeParams))
+      const describeResult = await client.send(
+        new DescribeTableCommand(describeParams)
+      )
       const existingGSIs = describeResult.Table?.GlobalSecondaryIndexes || []
 
       // Check if all required GSIs exist
@@ -31,7 +34,10 @@ export default async function createTable() {
       )
 
       if (missingGSIs.length > 0) {
-        console.log('Creating missing GSIs:', missingGSIs.map((gsi) => gsi.IndexName))
+        console.log(
+          'Creating missing GSIs:',
+          missingGSIs.map((gsi) => gsi.IndexName)
+        )
 
         // Update table to add missing GSIs
         const updateParams = {
@@ -64,13 +70,15 @@ export default async function createTable() {
           TableName: TABLE_SCHEMA.TableName,
           KeySchema: TABLE_SCHEMA.KeySchema,
           AttributeDefinitions: TABLE_SCHEMA.AttributeDefinitions,
-          GlobalSecondaryIndexes: TABLE_SCHEMA.GlobalSecondaryIndexes.map((gsi) => ({
-            ...gsi,
-            ProvisionedThroughput: {
-              ReadCapacityUnits: 5,
-              WriteCapacityUnits: 5,
-            },
-          })),
+          GlobalSecondaryIndexes: TABLE_SCHEMA.GlobalSecondaryIndexes.map(
+            (gsi) => ({
+              ...gsi,
+              ProvisionedThroughput: {
+                ReadCapacityUnits: 5,
+                WriteCapacityUnits: 5,
+              },
+            })
+          ),
           ProvisionedThroughput: {
             ReadCapacityUnits: 5,
             WriteCapacityUnits: 5,
