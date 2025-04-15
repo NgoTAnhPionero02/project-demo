@@ -8,6 +8,7 @@ export const ENTITY_TYPES = {
   LIST: 'LIST',
   TASK: 'TASK',
   IMAGE: 'IMAGE',
+  ATTACHMENT: 'ATTACHMENT',
 };
 
 // Table schema definition
@@ -90,5 +91,13 @@ export const keys = {
   userByEmail: (email) => ({
     email,
     // Use with EmailIndex
+  }),
+  taskAttachments: (taskId) => ({
+    pk: `TASK#${taskId}`,
+    // Use with begins_with(sk, 'ATTACHMENT#')
+  }),
+  attachment: (taskId, attachmentId) => ({
+    pk: `TASK#${taskId}`,
+    sk: `ATTACHMENT#${attachmentId}`,
   }),
 };

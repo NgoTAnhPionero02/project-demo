@@ -4,6 +4,7 @@ import express from 'express'
 import morgan from 'morgan'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpecs from './config/swagger.js'
+import attachmentRoutes from './routes/attachment.routes.js'
 import boardRoutes from './routes/board.routes.js'
 import imageRoutes from './routes/image.routes.js'
 import listRoutes from './routes/list.routes.js'
@@ -31,6 +32,7 @@ app.use('/board', boardRoutes)
 app.use('/list', listRoutes)
 app.use('/task', taskRoutes)
 app.use('/image', imageRoutes)
+app.use('/attachment', attachmentRoutes)
 
 // Error handling middleware
 app.use((err, req, res, _next) => {
