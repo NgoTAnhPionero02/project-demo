@@ -162,8 +162,8 @@ resource "aws_ecs_task_definition" "api" {
           protocol      = "tcp"
         }
       ]
-      cpu    = 512
-      memory = 1024
+      cpu    = 256
+      memory = 512
     }
   ])
 
@@ -172,8 +172,8 @@ resource "aws_ecs_task_definition" "api" {
   execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
   task_role_arn            = aws_iam_role.ecsTaskExecutionRole.arn
   network_mode             = "awsvpc"
-  cpu                      = 512
-  memory                   = 1024
+  cpu                      = 256
+  memory                   = 512
 
   tags = {
     Name = "${var.project}-ecs-td"
@@ -193,8 +193,8 @@ resource "aws_ecs_service" "api" {
 
   network_configuration {
     security_groups  = [var.security_group.web]
-    subnets          = var.vpc.private_subnets
-    assign_public_ip = false
+    subnets          = var.vpc.public_subnets
+    assign_public_ip = true
   }
 
   load_balancer {
