@@ -171,13 +171,15 @@ export const queryByIndex = async ({
   expressionAttributeValues,
   expressionAttributeNames = null,
   filterExpression = null,
-}) => queryItems({
-  indexName,
-  keyConditionExpression,
-  expressionAttributeValues,
-  expressionAttributeNames,
-  filterExpression,
-})
+}) =>
+  // eslint-disable-next-line implicit-arrow-linebreak
+  queryItems({
+    indexName,
+    keyConditionExpression,
+    expressionAttributeValues,
+    expressionAttributeNames,
+    filterExpression,
+  })
 
 // Scan the table with optional filter
 export const scanItems = async ({

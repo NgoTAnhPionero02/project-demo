@@ -24,10 +24,10 @@ const AssignMemberMenu = ({
 
   useEffect(() => {
     if (input.length > 0) {
-      const list = memberList.filter((member) => {
-        const name = member.name.toUpperCase();
-        const text = input.toUpperCase();
-        return name.includes(text);
+      const list = memberList?.filter((member) => {
+        const name = member.name?.toUpperCase();
+        const text = input?.toUpperCase();
+        return name?.includes(text);
       });
       setMemberList(list);
     }
@@ -36,7 +36,7 @@ const AssignMemberMenu = ({
   useEffect(() => {
     if (assigments && renderedBoard.userData) {
       const list = renderedBoard.userData.filter(
-        (user) => !assigments.includes(user.uid)
+        (user) => !assigments?.includes(user.uid)
       );
       setMemberList(list);
     }
@@ -88,7 +88,7 @@ const AssignMemberMenu = ({
                       container
                       xs={12}
                       className={classes.member}
-                      onClick={() => handleMemberClick(user.uid)}
+                      onClick={() => handleMemberClick(user.userId)}
                     >
                       <Grid item xs style={{ maxWidth: "32px" }}>
                         <UserAvatar user={user} styles={classes.avatar} />

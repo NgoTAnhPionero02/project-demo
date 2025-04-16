@@ -1,11 +1,11 @@
 import {
   makeStyles,
   withStyles,
-  createMuiTheme,
 } from "@material-ui/core/styles";
+import {createTheme} from "@material-ui/core/styles";
 import { Menu, MenuItem } from "@material-ui/core";
 
-export const AppTheme = createMuiTheme({
+export const AppTheme = createTheme({
   typography: {
     fontFamily: "Poppins !important",
   },

@@ -71,7 +71,11 @@ const EditDescription = ({ handleButtonClick }) => {
 
   return (
     <>
-      <Grid container className={classes.container} justify="space-around">
+      <Grid
+        container
+        className={classes.container}
+        justifyContent="space-around"
+      >
         <Grid item sm={1} xs={2}>
           <UserAvatar user={userData} styles={classes.avatar} />
         </Grid>
@@ -82,11 +86,11 @@ const EditDescription = ({ handleButtonClick }) => {
             label="Write a comment..."
             variant="outlined"
             multiline
-            rowsMax={4}
-            rows={1}
+            maxRows={4}
+            minRows={1}
           />
         </Grid>
-        <Grid item container xs={12} justify="flex-end">
+        <Grid item container xs={12} justifyContent="flex-end">
           <Grid item sm={3} xs={4}>
             <Button
               className={classes.commentButton}

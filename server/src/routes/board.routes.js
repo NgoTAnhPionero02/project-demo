@@ -155,7 +155,7 @@ router.get('/:id', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.put('/:id', async (req, res) => {
+router.put('/update/:id', async (req, res) => {
   try {
     const board = await updateBoard(req.params.id, req.body)
     res.status(200).json({
@@ -211,7 +211,7 @@ router.delete('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /board/{id}/invite:
+ * /board/invite:
  *   post:
  *     summary: Invite a user to the board
  *     tags: [Board]
@@ -242,9 +242,9 @@ router.delete('/:id', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.post('/:id/invite', async (req, res) => {
+router.put('/invite', async (req, res) => {
   try {
-    const { address } = req.body
+    const { address, boardId } = req.body
     if (!address) {
       return res.status(400).json({
         statusCode: 400,
@@ -252,7 +252,7 @@ router.post('/:id/invite', async (req, res) => {
       })
     }
 
-    const data = await inviteUser(req.params.id, address)
+    const data = await inviteUser(boardId, address)
     res.status(200).json({
       statusCode: 200,
       message: 'User invited successfully',

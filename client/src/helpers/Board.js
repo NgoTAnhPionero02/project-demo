@@ -51,7 +51,7 @@ const HandleUserRelatedBoards = (
           GetUserRelatedBoards(body)
             .then((response) => {
               if (response.statusCode === 200) {
-                setBoards(response.boardData);
+                setBoards(response.data);
                 UIHelpers.HandleBackdropClose(setOpenBackdrop);
                 resolve(true);
               }

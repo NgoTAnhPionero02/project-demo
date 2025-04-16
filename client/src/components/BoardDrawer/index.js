@@ -19,14 +19,12 @@ import { drawerStyles } from "./styles";
 
 const BoardDrawer = ({ board, admin }) => {
   const classes = drawerStyles();
-  const { drawerOpen, changeDrawerVisibility, setRenderedBoard } = useContext(
-    UIContext
-  );
+  const { drawerOpen, changeDrawerVisibility, setRenderedBoard } =
+    useContext(UIContext);
   const { boards, setBoards } = useContext(UserContext);
 
-  const [displayDescriptionEditArea, setDisplayDescriptionEditArea] = useState(
-    false
-  );
+  const [displayDescriptionEditArea, setDisplayDescriptionEditArea] =
+    useState(false);
   const [displayTitleEditArea, setDisplayTitleEditArea] = useState(false);
   const [displayRemoveDialog, setDisplayRemoveDialog] = useState(false);
 
@@ -117,7 +115,7 @@ const BoardDrawer = ({ board, admin }) => {
       classes={{ paper: classes.drawer }}
     >
       {board && (
-        <Grid container justify="center">
+        <Grid container justifyContent="center">
           {/* MENU - X BUTTON */}
           <Grid
             item
@@ -136,7 +134,7 @@ const BoardDrawer = ({ board, admin }) => {
                 Menu
               </Typography>
             </Grid>
-            <Grid item xs={2} container justify="flex-end">
+            <Grid item xs={2} container justifyContent="flex-end">
               <IconButton
                 className={classes.closeButton}
                 onClick={() => changeDrawerVisibility("set", false)}
@@ -196,7 +194,7 @@ const BoardDrawer = ({ board, admin }) => {
                 <SectionTitle
                   title="Title"
                   icon="description"
-                  alignItems="end"
+                  alignItems="flex-end"
                 />
               </Grid>
             </Grid>
@@ -204,7 +202,7 @@ const BoardDrawer = ({ board, admin }) => {
               item
               xs
               container
-              justify="start"
+              justifyContent="flex-start"
               style={{ display: admin ? "flex" : "none" }}
             >
               <LightButton
@@ -260,7 +258,7 @@ const BoardDrawer = ({ board, admin }) => {
               <SectionTitle
                 title="Description"
                 icon="description"
-                alignItems="end"
+                alignItems="flex-end"
               />
             </Grid>
             <Grid item xs={2} style={{ display: admin ? "block" : "none" }}>
@@ -313,7 +311,7 @@ const BoardDrawer = ({ board, admin }) => {
             alignItems="center"
           >
             <Grid item xs>
-              <SectionTitle title="Team" icon="people" alignItems="end" />
+              <SectionTitle title="Team" icon="people" alignItems="flex-end" />
             </Grid>
           </Grid>
           {/* MAPPING TEAM MEMBERS */}
@@ -379,7 +377,7 @@ const BoardDrawer = ({ board, admin }) => {
                         </Typography>
                       </Grid>
                     </Grid>
-                    <Grid item container xs justify="center">
+                    <Grid item container xs justifyContent="center">
                       <Grid item contaşner xs={9}>
                         <div
                           onClick={() => setDisplayRemoveDialog(true)}

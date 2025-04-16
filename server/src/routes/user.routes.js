@@ -50,7 +50,7 @@ const router = express.Router()
  */
 router.post('/', async (req, res) => {
   try {
-    const { email, name, picture } = req.body
+    const { uid, email, name, picture } = req.body
     if (!email || !name) {
       return res.status(400).json({
         statusCode: 400,
@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
       })
     }
 
-    const data = await createNewUser(email, name, picture)
+    const data = await createNewUser(uid, email, name, picture)
     res.status(200).json({
       statusCode: 200,
       message: 'User created successfully!',
@@ -199,15 +199,15 @@ router.put('/boards', async (req, res) => {
  */
 router.post('/boards', async (req, res) => {
   try {
-    const { userId } = req.body
-    if (!userId) {
+    const { boardList } = req.body
+    if (!boardList) {
       return res.status(400).json({
         statusCode: 400,
-        message: 'User ID is required',
+        message: 'boardList is required',
       })
     }
 
-    const boards = await getUserBoards(userId)
+    const boards = await getUserBoards(boardList)
     res.status(200).json({
       statusCode: 200,
       message: 'User boards retrieved successfully',

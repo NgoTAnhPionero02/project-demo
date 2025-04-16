@@ -1,4 +1,4 @@
-import { ENTITY_TYPES } from '../config/tables.js'
+import { ENTITY_TYPES, keys } from '../config/tables.js'
 import {
   createItem,
   deleteItem,
@@ -6,26 +6,35 @@ import {
   queryItems,
   updateItem,
 } from '../utils/dynamodb.js'
-import createUniqueId from './common.js'
 
 // Create a new list
-export const createList = async (boardId, listData) => {
+export const createList = async (boardId, listData, listOrder) => {
   try {
     // Generate a unique ID for the list
-    const listId = await createUniqueId()
 
     const list = {
       pk: `BOARD#${boardId}`,
-      sk: `LIST#${listId}`,
-      id: listId,
+      sk: `LIST#${listData.id}`,
+      id: listData.id,
       boardId,
       title: listData.title,
-      order: listData.order,
       taskIds: listData.taskIds || [],
       entityType: ENTITY_TYPES.LIST,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
+
+    await updateItem({
+      key: keys.board(boardId),
+      updateExpression: 'SET #listOrder = :listOrder, updatedAt = :updatedAt',
+      expressionAttributeNames: {
+        '#listOrder': 'listOrder',
+      },
+      expressionAttributeValues: {
+        ':listOrder': listOrder,
+        ':updatedAt': new Date().toISOString(),
+      },
+    })
 
     await createItem(list)
     return list
@@ -118,21 +127,20 @@ export const deleteList = async (boardId, listId) => {
   }
 }
 
-export const reorderLists = async (boardId, lists) => {
+export const reorderLists = async (boardId, listOrder) => {
   try {
-    const updatePromises = lists.map((list, index) => updateItem({
-      key: {
-        pk: `BOARD#${boardId}`,
-        sk: `LIST#${list.id}`,
+    await updateItem({
+      key: keys.board(boardId),
+      updateExpression: 'SET #listOrder = :listOrder, updatedAt = :updatedAt',
+      expressionAttributeNames: {
+        '#listOrder': 'listOrder',
       },
-      updateExpression: 'SET order = :order, updatedAt = :updatedAt',
       expressionAttributeValues: {
-        ':order': index,
+        ':listOrder': listOrder,
         ':updatedAt': new Date().toISOString(),
       },
-    }))
+    })
 
-    await Promise.all(updatePromises)
     return true
   } catch (error) {
     console.error('Error reordering lists:', error)
@@ -162,15 +170,35 @@ export const updateListTasks = async (boardId, listId, taskIds) => {
 
 export const renameList = async (boardId, listId, title) => {
   try {
+    console.log('aaaaaaaaaaaaaaa', {
+      key: {
+        pk: `BOARD#${boardId}`,
+        sk: `LIST#${listId}`,
+      },
+      updateExpression: 'SET #title = :title, #updatedAt = :updatedAt',
+      expressionAttributeValues: {
+        ':title': title,
+        ':updatedAt': new Date().toISOString(),
+      },
+      expressionAttributeNames: {
+        '#title': 'title',
+        '#updatedAt': 'updatedAt',
+      },
+    })
+
     await updateItem({
       key: {
         pk: `BOARD#${boardId}`,
         sk: `LIST#${listId}`,
       },
-      updateExpression: 'SET title = :title, updatedAt = :updatedAt',
+      updateExpression: 'SET #title = :title, #updatedAt = :updatedAt',
       expressionAttributeValues: {
         ':title': title,
         ':updatedAt': new Date().toISOString(),
+      },
+      expressionAttributeNames: {
+        '#title': 'title',
+        '#updatedAt': 'updatedAt',
       },
     })
     return true
