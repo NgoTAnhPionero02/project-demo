@@ -6,7 +6,7 @@ class ListColumn extends React.Component {
     const { list, taskMap, index, createNewTask } = this.props;
     let tasks;
     if (list.taskIds) {
-      tasks = list.taskIds.map((taskId) => taskMap[taskId]);
+      tasks = list.taskIds?.map((taskId) => taskMap[taskId]);
     }
     return (
       <div>

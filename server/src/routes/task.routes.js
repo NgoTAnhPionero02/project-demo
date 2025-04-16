@@ -5,6 +5,7 @@ import {
   updateTask,
   deleteTask,
   reorderTasks,
+  switchTasks,
 } from '../service/tasks.js'
 
 const router = express.Router()
@@ -67,7 +68,7 @@ const router = express.Router()
  */
 router.post('/', async (req, res) => {
   try {
-    const { listId, ...taskData } = req.body
+    const { boardId, listId, task, taskIds } = req.body
     if (!listId) {
       return res.status(400).json({
         statusCode: 400,
@@ -75,11 +76,11 @@ router.post('/', async (req, res) => {
       })
     }
 
-    const task = await createTask(listId, taskData)
+    const result = await createTask(boardId, listId, task, taskIds)
     res.status(200).json({
       statusCode: 200,
       message: 'Task created successfully',
-      data: task,
+      data: result,
     })
   } catch (error) {
     res.status(500).json({
@@ -129,7 +130,7 @@ router.get('/list/:listId', async (req, res) => {
 
 /**
  * @swagger
- * /task/{id}:
+ * /task/update:
  *   put:
  *     summary: Update a task
  *     tags: [Task]
@@ -154,17 +155,11 @@ router.get('/list/:listId', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.put('/:id', async (req, res) => {
+router.put('/update', async (req, res) => {
   try {
-    const { listId, ...updateData } = req.body
-    if (!listId) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'List ID is required',
-      })
-    }
+    const { boardId, taskId, property, data } = req.body
 
-    const task = await updateTask(listId, req.params.id, updateData)
+    const task = await updateTask(boardId, taskId, property, data)
     res.status(200).json({
       statusCode: 200,
       message: 'Task updated successfully',
@@ -258,15 +253,66 @@ router.delete('/:id', async (req, res) => {
  */
 router.put('/reorder', async (req, res) => {
   try {
-    const { listId, tasks } = req.body
-    if (!listId || !tasks || !Array.isArray(tasks)) {
+    const { boardId, listId, taskIds } = req.body
+    if (!listId || !taskIds || !Array.isArray(taskIds)) {
       return res.status(400).json({
         statusCode: 400,
         message: 'List ID and tasks array are required',
       })
     }
 
-    const updatedTasks = await reorderTasks(listId, tasks)
+    const updatedTasks = await reorderTasks(boardId, listId, taskIds)
+    res.status(200).json({
+      statusCode: 200,
+      message: 'Tasks reordered successfully',
+      data: updatedTasks,
+    })
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+      error,
+    })
+  }
+})
+
+/**
+ * @swagger
+ * /task/reorder:
+ *   put:
+ *     summary: Reorder tasks in a list
+ *     tags: [Task]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - listId
+ *               - tasks
+ *             properties:
+ *               listId:
+ *                 type: string
+ *                 description: The list id
+ *               tasks:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/Task'
+ *                 description: Array of tasks with updated order
+ *     responses:
+ *       200:
+ *         description: Tasks reordered successfully
+ *       400:
+ *         description: Invalid input
+ *       500:
+ *         description: Server error
+ */
+router.put('/switch', async (req, res) => {
+  try {
+    const { boardId, lists } = req.body
+
+    const updatedTasks = await switchTasks(boardId, lists)
     res.status(200).json({
       statusCode: 200,
       message: 'Tasks reordered successfully',

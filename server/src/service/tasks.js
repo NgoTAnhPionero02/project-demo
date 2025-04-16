@@ -1,38 +1,44 @@
 import { ENTITY_TYPES, keys } from '../config/tables.js'
 import {
-  batchWrite,
   createItem,
   deleteItem,
   queryByIndex,
   queryItems,
   updateItem,
 } from '../utils/dynamodb.js'
-import createUniqueId from './common.js'
 
-export const createTask = async (boardId, taskData) => {
+export const createTask = async (boardId, listId, task, taskIds) => {
   try {
     // Generate a unique ID for the task
-    const taskId = await createUniqueId()
 
-    const task = {
+    const taskData = {
       pk: `BOARD#${boardId}`,
-      sk: `TASK#${taskId}`,
-      id: taskId,
+      sk: `TASK#${task.id}`,
+      id: task.id,
       boardId,
-      listId: taskData.listId,
-      title: taskData.title,
-      description: taskData.description || '',
-      assignee: taskData.assignee || null,
-      dueDate: taskData.dueDate || null,
-      labels: taskData.labels || [],
-      order: taskData.order,
+      listId,
+      title: task.title,
+      assignee: task.assignee || 'null',
       entityType: ENTITY_TYPES.TASK,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
 
-    await createItem(task)
-    return task
+    await createItem(taskData)
+
+    await updateItem({
+      key: keys.list(boardId, listId),
+      updateExpression: 'SET #taskIds = :taskIds, updatedAt = :updatedAt',
+      expressionAttributeNames: {
+        '#taskIds': 'taskIds',
+      },
+      expressionAttributeValues: {
+        ':taskIds': taskIds,
+        ':updatedAt': new Date().toISOString(),
+      },
+    })
+
+    return taskData
   } catch (error) {
     console.error('Error creating task:', error)
     throw error
@@ -89,57 +95,18 @@ export const getTasksByAssignee = async (userId) => {
   }
 }
 
-export const updateTask = async (boardId, taskId, updateData) => {
+export const updateTask = async (boardId, taskId, property, data) => {
   try {
-    // Build dynamic update expression based on provided data
-    let updateExpression = 'SET';
-    const expressionAttributeValues = {};
-    const expressionAttributeNames = {};
-
-    if (updateData.title !== undefined) {
-      updateExpression += ' title = :title,';
-      expressionAttributeValues[':title'] = updateData.title;
-    }
-
-    if (updateData.description !== undefined) {
-      updateExpression += ' description = :description,';
-      expressionAttributeValues[':description'] = updateData.description;
-    }
-
-    if (updateData.order !== undefined) {
-      updateExpression += ' order = :order,';
-      expressionAttributeValues[':order'] = updateData.order;
-    }
-
-    if (updateData.listId !== undefined) {
-      updateExpression += ' listId = :listId,';
-      expressionAttributeValues[':listId'] = updateData.listId;
-    }
-
-    if (updateData.assignee !== undefined) {
-      updateExpression += ' assignee = :assignee,';
-      expressionAttributeValues[':assignee'] = updateData.assignee;
-    }
-
-    if (updateData.dueDate !== undefined) {
-      updateExpression += ' dueDate = :dueDate,';
-      expressionAttributeValues[':dueDate'] = updateData.dueDate;
-    }
-
-    if (updateData.labels !== undefined) {
-      updateExpression += ' labels = :labels,';
-      expressionAttributeValues[':labels'] = updateData.labels;
-    }
-
-    // Always update the updatedAt timestamp
-    updateExpression += ' updatedAt = :updatedAt';
-    expressionAttributeValues[':updatedAt'] = new Date().toISOString();
-
     const updatedTask = await updateItem({
       key: keys.task(boardId, taskId),
-      updateExpression,
-      expressionAttributeValues,
-      expressionAttributeNames,
+      updateExpression: 'SET #property = :data, updatedAt = :updatedAt',
+      expressionAttributeNames: {
+        '#property': property,
+      },
+      expressionAttributeValues: {
+        ':data': data,
+        ':updatedAt': new Date().toISOString(),
+      },
     })
 
     return updatedTask
@@ -159,26 +126,56 @@ export const deleteTask = async (boardId, taskId) => {
   }
 }
 
-export const reorderTasks = async (boardId, listId, tasks) => {
+export const reorderTasks = async (boardId, listId, taskIds) => {
   try {
-    const updatedTasks = tasks.map((task, index) => ({
-      pk: `BOARD#${boardId}`,
-      sk: `TASK#${task.id}`,
-      id: task.id,
-      boardId,
-      listId,
-      title: task.title,
-      description: task.description || '',
-      assignee: task.assignee || null,
-      dueDate: task.dueDate || null,
-      labels: task.labels || [],
-      order: index,
-      entityType: ENTITY_TYPES.TASK,
-      updatedAt: new Date().toISOString(),
-    }))
+    await updateItem({
+      key: keys.list(boardId, listId),
+      updateExpression: 'SET #taskIds = :taskIds, updatedAt = :updatedAt',
+      expressionAttributeNames: {
+        '#taskIds': 'taskIds',
+      },
+      expressionAttributeValues: {
+        ':taskIds': taskIds,
+        ':updatedAt': new Date().toISOString(),
+      },
+    })
+    return true
+  } catch (error) {
+    console.error('Error reordering tasks:', error)
+    throw error
+  }
+}
 
-    await batchWrite(updatedTasks)
-    return updatedTasks
+export const switchTasks = async (boardId, lists) => {
+  try {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const [id, list] of Object.entries(lists)) {
+      console.log(id, {
+        key: keys.list(boardId, list.id),
+        updateExpression: 'SET #taskIds = :taskIds, updatedAt = :updatedAt',
+        expressionAttributeNames: {
+          '#taskIds': 'taskIds',
+        },
+        expressionAttributeValues: {
+          ':taskIds': list.taskIds,
+          ':updatedAt': new Date().toISOString(),
+        },
+      })
+      // eslint-disable-next-line no-await-in-loop
+      await updateItem({
+        key: keys.list(boardId, list.id),
+        updateExpression: 'SET #taskIds = :taskIds, updatedAt = :updatedAt',
+        expressionAttributeNames: {
+          '#taskIds': 'taskIds',
+        },
+        expressionAttributeValues: {
+          ':taskIds': list.taskIds,
+          ':updatedAt': new Date().toISOString(),
+        },
+      })
+    }
+
+    return true
   } catch (error) {
     console.error('Error reordering tasks:', error)
     throw error

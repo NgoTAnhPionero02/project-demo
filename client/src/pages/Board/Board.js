@@ -51,6 +51,7 @@ const Board = () => {
       setShowAllBoards,
       setOpenBackdrop
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boards]);
 
   useEffect(() => {
@@ -86,6 +87,7 @@ const Board = () => {
         );
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [renderedBoard]);
 
   return (

@@ -1,5 +1,5 @@
 // Single table design for DynamoDB
-export const { TABLE_NAME } = process.env;
+export const TABLE_NAME = process.env.TABLE_NAME || 'demo-table'
 
 // Entity types
 export const ENTITY_TYPES = {
@@ -9,7 +9,7 @@ export const ENTITY_TYPES = {
   TASK: 'TASK',
   IMAGE: 'IMAGE',
   ATTACHMENT: 'ATTACHMENT',
-};
+}
 
 // Table schema definition
 export const TABLE_SCHEMA = {
@@ -35,20 +35,16 @@ export const TABLE_SCHEMA = {
     },
     {
       IndexName: 'EmailIndex',
-      KeySchema: [
-        { AttributeName: 'email', KeyType: 'HASH' },
-      ],
+      KeySchema: [{ AttributeName: 'email', KeyType: 'HASH' }],
       Projection: { ProjectionType: 'ALL' },
     },
     {
       IndexName: 'AssigneeIndex',
-      KeySchema: [
-        { AttributeName: 'assignee', KeyType: 'HASH' },
-      ],
+      KeySchema: [{ AttributeName: 'assignee', KeyType: 'HASH' }],
       Projection: { ProjectionType: 'ALL' },
     },
   ],
-};
+}
 
 // Helper functions to generate keys
 export const keys = {
@@ -100,4 +96,4 @@ export const keys = {
     pk: `TASK#${taskId}`,
     sk: `ATTACHMENT#${attachmentId}`,
   }),
-};
+}

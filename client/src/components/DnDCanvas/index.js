@@ -287,6 +287,7 @@ class DndCanvas extends React.Component {
               {this.state.listOrder &&
                 this.state.lists &&
                 this.state.listOrder.map((listId, index) => {
+                  console.log("AAAAAAAAAAAAAA", this.state);
                   const list = this.state.lists[listId];
                   if (list && list.id) {
                     return (

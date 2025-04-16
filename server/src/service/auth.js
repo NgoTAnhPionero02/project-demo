@@ -1,19 +1,20 @@
 import { ENTITY_TYPES, keys } from '../config/tables.js'
-import { createItem, getItem, queryByIndex } from '../utils/dynamodb.js'
-import createUniqueId from './common.js'
+import {
+  createItem,
+  getItem,
+  queryByIndex,
+  queryItems,
+} from '../utils/dynamodb.js'
 
 // Create a new user
-export const createNewUser = async (email, name, picture) => {
+export const createNewUser = async (uid, email, name) => {
   try {
-    const uid = await createUniqueId()
-
     const userData = {
       pk: `USER#${uid}`,
       sk: 'METADATA',
       uid,
       email,
       name,
-      picture,
       entityType: ENTITY_TYPES.USER,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -31,7 +32,17 @@ export const createNewUser = async (email, name, picture) => {
 export const returnUserData = async (uid) => {
   try {
     const user = await getItem(keys.user(uid))
-    return user
+    if (!user) return {}
+
+    const listUserBoards = await queryItems({
+      keyConditionExpression: 'pk = :user AND begins_with(sk, :sk)',
+      expressionAttributeValues: {
+        ':user': `USER#${uid}`,
+        ':sk': `BOARD#`,
+      },
+    })
+
+    return { ...user, boards: listUserBoards }
   } catch (error) {
     console.error('Error getting user data:', error)
     throw error

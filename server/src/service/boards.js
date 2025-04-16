@@ -1,4 +1,4 @@
-import { ENTITY_TYPES } from '../config/tables.js'
+import { ENTITY_TYPES, keys } from '../config/tables.js'
 import {
   createItem,
   deleteItem,
@@ -25,6 +25,7 @@ export const createNewBoard = async (boardData) => {
       coverPhoto: boardData.coverPhoto,
       visibility: boardData.visibility || 'private',
       entityType: ENTITY_TYPES.BOARD,
+      listOrder: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -32,19 +33,24 @@ export const createNewBoard = async (boardData) => {
     await createItem(board)
 
     // Create board-user relationships
-    const userPromises = boardData.users.map((userId) => {
+    // eslint-disable-next-line no-restricted-syntax, no-unreachable-loop
+    for (const user of boardData.users) {
+      // eslint-disable-next-line no-await-in-loop
+      const userData = await getItem(keys.user(user.uid))
+
       const userBoardRelation = {
-        pk: `USER#${userId}`,
         sk: `BOARD#${boardId}`,
-        userId,
+        pk: `USER#${user.uid}`,
+        userId: user.uid,
         boardId,
-        role: userId === boardData.admin ? 'admin' : 'member',
+        name: userData.name,
+        role: user.uid === boardData.admin ? 'admin' : 'member',
         createdAt: new Date().toISOString(),
       }
-      return createItem(userBoardRelation)
-    })
+      // eslint-disable-next-line no-await-in-loop
+      await createItem(userBoardRelation)
+    }
 
-    await Promise.all(userPromises)
     return board
   } catch (error) {
     console.error('Error creating new board:', error)
@@ -144,10 +150,15 @@ export const deleteBoard = async (boardId) => {
     })
 
     // Delete board-user relationships
-    const deletePromises = users.map((user) => deleteItem({
-      pk: user.pk,
-      sk: user.sk,
-    }))
+    const deletePromises = users.map(
+      (user) =>
+        // eslint-disable-next-line implicit-arrow-linebreak
+        deleteItem({
+          pk: user.pk,
+          sk: user.sk,
+        })
+      // eslint-disable-next-line function-paren-newline
+    )
 
     await Promise.all(deletePromises)
     return true
@@ -158,13 +169,27 @@ export const deleteBoard = async (boardId) => {
 }
 
 // Invite user to board
-export const inviteUser = async (boardId, userId) => {
+export const inviteUser = async (boardId, address) => {
   try {
+    console.log('AAAAAAAAA', boardId, address)
+    const userData = await queryByIndex({
+      indexName: 'EmailIndex',
+      keyConditionExpression: 'email = :email',
+      expressionAttributeValues: {
+        ':email': address,
+      },
+    })
+
+    if (!userData) throw new Error('User not exist')
+
+    console.log('AAAAAAAAAAAAAAAAAAAAAAA', userData)
+
     const userBoardRelation = {
-      pk: `USER#${userId}`,
+      pk: `USER#${userData[0].uid}`,
       sk: `BOARD#${boardId}`,
-      userId,
+      userId: userData[0].uid,
       boardId,
+      name: userData[0].name,
       role: 'member',
       createdAt: new Date().toISOString(),
     }
@@ -195,18 +220,59 @@ export const returnBoardRelatedUsers = async (boardId) => {
 }
 
 // Get user's boards
-export const getUserBoards = async (userId) => {
+export const getUserBoards = async (boardList) => {
   try {
-    const boards = await queryByIndex({
-      indexName: 'UserBoardIndex',
-      keyConditionExpression: 'sk = :userId',
-      expressionAttributeValues: {
-        ':userId': `USER#${userId}`,
-      },
-      expressionAttributeNames: {
-        '#sk': 'sk',
-      },
-    })
+    const boards = []
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const item of boardList) {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await getItem(keys.board(item))
+
+      if (result) {
+        // eslint-disable-next-line no-await-in-loop
+        const userData = await queryByIndex({
+          indexName: 'UserBoardIndex',
+          keyConditionExpression: 'sk = :board AND begins_with(pk, :pk_prefix)',
+          expressionAttributeValues: {
+            ':board': `BOARD#${item}`,
+            ':pk_prefix': 'USER#',
+          },
+        })
+
+        // eslint-disable-next-line no-await-in-loop
+        const listsArray = await queryItems({
+          keyConditionExpression:
+            'pk = :boardId AND begins_with(sk, :sk_prefix)',
+          expressionAttributeValues: {
+            ':boardId': `BOARD#${item}`,
+            ':sk_prefix': 'LIST#',
+          },
+        })
+
+        // eslint-disable-next-line no-unused-vars, no-await-in-loop
+        const taskArray = await queryItems({
+          keyConditionExpression:
+            'pk = :boardId AND begins_with(sk, :sk_prefix)',
+          expressionAttributeValues: {
+            ':boardId': `BOARD#${item}`,
+            ':sk_prefix': 'TASK#',
+          },
+        })
+
+        const lists = listsArray.reduce((acc, list) => {
+          acc[list.id] = list
+          return acc
+        }, {})
+
+        const tasks = taskArray.reduce((acc, list) => {
+          acc[list.id] = list
+          return acc
+        }, {})
+
+        boards.push({ ...result, userData, lists, tasks })
+      }
+    }
 
     return boards
   } catch (error) {

@@ -1,5 +1,4 @@
 import firebase from "firebase";
-import { FirebaseConfig } from "./FirebaseConfig";
 import { handleSignIn, manualSignIn } from "../functions/UserFunctions";
 
 const SignUp = (
@@ -15,13 +14,13 @@ const SignUp = (
       .auth()
       .createUserWithEmailAndPassword(email, password)
       .then(async (res) => {
-        //const token = await Object.entries(res.user)[5][1].b;
-        //set token to localStorage
-        //handleSignIn(res, setUserData, setOpenBackdrop);
+        // const token = await Object.entries(res.user)[5][1].b;
+        // set token to localStorage
+        // handleSignIn(res, setUserData, setOpenBackdrop);
         resolve(await manualSignIn(res));
 
         // await localStorage.setItem("pmt_token", token);
-        // //grab token from local storage and set to state.
+        //grab token from local storage and set to state.
         // await setToken(token);
       })
       .catch((err) => {
@@ -53,65 +52,8 @@ const Login = (
     .catch((err) => {
       setErrors((prev) => [...prev, err.message]);
     });
-};
-
-const LoginWithGoogle = (setErrors, setToken, setUserData, setOpenBackdrop) => {
-  let provider = new firebase.auth.GoogleAuthProvider();
-
-  firebase
-    .auth()
-    .signInWithPopup(provider)
-    .then(async (res) => {
-      const token = await Object.entries(res.user)[5][1].b;
-      //set token to localStorage
-      handleSignIn(res, setUserData, setOpenBackdrop);
-      await localStorage.setItem("pmt_token", token);
-      await setToken(token);
-    })
-    .catch((err) => {
-      setErrors((prev) => [...prev, err.message]);
-    });
-};
-
-const LoginWithGithub = (setErrors, setToken, setUserData, setOpenBackdrop) => {
-  let provider = new firebase.auth.GithubAuthProvider();
-
-  firebase
-    .auth()
-    .signInWithPopup(provider)
-    .then(async (res) => {
-      const token = await Object.entries(res.user)[5][1].b;
-      //set token to localStorage
-      handleSignIn(res, setUserData, setOpenBackdrop);
-      await localStorage.setItem("pmt_token", token);
-      await setToken(token);
-    })
-    .catch((err) => {
-      setErrors((prev) => [...prev, err.message]);
-    });
-};
-
-const LoginWithTwitter = (
-  setErrors,
-  setToken,
-  setUserData,
-  setOpenBackdrop
-) => {
-  let provider = new firebase.auth.TwitterAuthProvider();
-
-  firebase
-    .auth()
-    .signInWithPopup(provider)
-    .then(async (res) => {
-      const token = await Object.entries(res.user)[5][1].b;
-      //set token to localStorage
-      handleSignIn(res, setUserData, setOpenBackdrop);
-      await localStorage.setItem("pmt_token", token);
-      await setToken(token);
-    })
-    .catch((err) => {
-      setErrors((prev) => [...prev, err.message]);
-    });
+  localStorage.setItem("pmt_token", "token");
+  setToken("token");
 };
 
 const Logout = (setErrors, setToken) => {
@@ -139,8 +81,5 @@ const Logout = (setErrors, setToken) => {
 export const AuthMethods = {
   signup: SignUp,
   login: Login,
-  googleLogin: LoginWithGoogle,
-  githubLogin: LoginWithGithub,
-  twitterLogin: LoginWithTwitter,
   logout: Logout,
 };

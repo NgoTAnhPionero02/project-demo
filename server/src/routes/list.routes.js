@@ -65,7 +65,7 @@ const router = express.Router()
  */
 router.post('/', async (req, res) => {
   try {
-    const { boardId, ...listData } = req.body
+    const { boardId, list, listOrder } = req.body
     if (!boardId) {
       return res.status(400).json({
         statusCode: 400,
@@ -73,11 +73,11 @@ router.post('/', async (req, res) => {
       })
     }
 
-    const list = await createList(boardId, listData)
+    const resu = await createList(boardId, list, listOrder)
     res.status(200).json({
       statusCode: 200,
       message: 'List created successfully',
-      data: list,
+      data: resu,
     })
   } catch (error) {
     res.status(500).json({
@@ -152,7 +152,7 @@ router.get('/board/:boardId', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.put('/:id', async (req, res) => {
+router.put('/update/:id', async (req, res) => {
   try {
     const { boardId, ...updateData } = req.body
     if (!boardId) {
@@ -254,17 +254,17 @@ router.delete('/:id', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.put('/reorder', async (req, res) => {
+router.put('/', async (req, res) => {
   try {
-    const { boardId, lists } = req.body
-    if (!boardId || !lists || !Array.isArray(lists)) {
+    const { boardId, listOrder } = req.body
+    if (!boardId || !listOrder || !Array.isArray(listOrder)) {
       return res.status(400).json({
         statusCode: 400,
         message: 'Board ID and lists array are required',
       })
     }
 
-    const updatedLists = await reorderLists(boardId, lists)
+    const updatedLists = await reorderLists(boardId, listOrder)
     res.status(200).json({
       statusCode: 200,
       message: 'Lists reordered successfully',
@@ -312,9 +312,9 @@ router.put('/reorder', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.put('/rename/:id', async (req, res) => {
+router.put('/rename', async (req, res) => {
   try {
-    const { title } = req.body
+    const { boardId, listId, title } = req.body
     if (!title) {
       return res.status(400).json({
         statusCode: 400,
@@ -322,7 +322,7 @@ router.put('/rename/:id', async (req, res) => {
       })
     }
 
-    const data = await renameList(req.params.id, title)
+    const data = await renameList(boardId, listId, title)
     res.status(200).json({
       statusCode: 200,
       message: 'List renamed successfully',

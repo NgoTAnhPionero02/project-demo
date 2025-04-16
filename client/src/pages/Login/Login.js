@@ -9,15 +9,7 @@ import { loginStyles } from "./styles";
 const Login = () => {
   const classes = loginStyles(AuthTheme);
   const history = useHistory();
-  const {
-    handleLogin,
-    handleGoogleLogin,
-    handleTwitterLogin,
-    handleGithubLogin,
-    setInputs,
-    errors,
-    token,
-  } = useContext(FirebaseAuth);
+  const { handleLogin, setInputs, errors, token } = useContext(FirebaseAuth);
 
   const [alertOpen, setAlertOpen] = useState(false);
   const [alert, setAlert] = useState("");
@@ -36,6 +28,7 @@ const Login = () => {
     } else {
       history.push("/boards");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   useEffect(() => {
@@ -71,9 +64,6 @@ const Login = () => {
           <AuthForm
             handleSubmit={handleSubmit}
             handleChange={handleChange}
-            handleGithubLogin={handleGithubLogin}
-            handleGoogleLogin={handleGoogleLogin}
-            handleTwitterLogin={handleTwitterLogin}
             constants={constants}
           />
         </Container>

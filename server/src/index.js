@@ -25,8 +25,8 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs))
 
 // Routes
 app.use('/health', (req, res) => {
-  res.status(200).send('OK');
-});
+  res.status(200).send('OK')
+})
 app.use('/user', userRoutes)
 app.use('/board', boardRoutes)
 app.use('/list', listRoutes)
@@ -47,5 +47,7 @@ app.use((err, req, res, _next) => {
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
-  console.log(`Swagger documentation available at http://localhost:${PORT}/docs`)
+  console.log(
+    `Swagger documentation available at http://localhost:${PORT}/docs`
+  )
 })

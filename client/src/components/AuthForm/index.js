@@ -8,19 +8,11 @@ import {
   IconButton,
   InputAdornment,
 } from "@material-ui/core";
-import { LockOutlined, Mail, Lock, Twitter, GitHub } from "@material-ui/icons";
-import { Google } from "../Icons";
+import { LockOutlined, Mail, Lock } from "@material-ui/icons";
 import { AuthTheme } from "layouts";
 import { formStyles, LoginTextField } from "./styles";
 
-const AuthForm = ({
-  handleSubmit,
-  handleChange,
-  handleGoogleLogin,
-  handleGithubLogin,
-  handleTwitterLogin,
-  constants,
-}) => {
+const AuthForm = ({ handleSubmit, handleChange, constants }) => {
   const classes = formStyles(AuthTheme);
   return (
     <div className={classes.paper}>
@@ -91,7 +83,11 @@ const AuthForm = ({
         >
           {constants.buttonText}
         </Button>
-        <Grid className={classes.gridContainer} container justify="center">
+        <Grid
+          className={classes.gridContainer}
+          container
+          justifyContent="center"
+        >
           <Grid item>
             <Typography className={classes.infoText} variant="body2">
               or continue with these
@@ -101,42 +97,8 @@ const AuthForm = ({
         <Grid
           className={classes.gridContainer}
           container
-          spacing={3}
-          justify="center"
-          alignItems="center"
+          justifyContent="flex-end"
         >
-          <Grid item xs={3}>
-            <IconButton
-              aria-label="upload picture"
-              component="span"
-              className={classes.iconButton}
-              onClick={() => handleGoogleLogin()}
-            >
-              <Google />
-            </IconButton>
-          </Grid>
-          <Grid item xs={3}>
-            <IconButton
-              aria-label="upload picture"
-              component="span"
-              className={classes.iconButton}
-              onClick={() => handleTwitterLogin()}
-            >
-              <Twitter />
-            </IconButton>
-          </Grid>
-          <Grid item xs={3}>
-            <IconButton
-              aria-label="upload picture"
-              component="span"
-              className={classes.iconButton}
-              onClick={() => handleGithubLogin()}
-            >
-              <GitHub />
-            </IconButton>
-          </Grid>
-        </Grid>
-        <Grid className={classes.gridContainer} container justify="flex-end">
           <Grid item>
             <Typography className={classes.infoText} variant="body2">
               {constants.info}
